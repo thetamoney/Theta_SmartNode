@@ -2,7 +2,7 @@
 
 EXECUTABLE='thetad'
 DIR='/theta/.thetacore'
-CONF_FILE='raptoreum.conf'
+CONF_FILE='theta.conf'
 FILE=$DIR/$CONF_FILE
 
 
