@@ -1,6 +1,6 @@
 #!/bin/bash
-# URLs for raptoreum explorers. Main and backup one.
-URL=( 'https://explorer.raptoreum.com/' 'https://raptor.mopsus.com/' )
+# URLs for theta explorers. Main and backup one.
+URL=( 'https://chain.thetaspere.com/' )
 URL_ID=0
 
 BOOTSTRAP_TAR='https://bootstrap.raptoreum.com/bootstrap_with_indexes.tar.xz'
@@ -10,8 +10,8 @@ PREV_SCORE=0
 LOCAL_HEIGHT=0
 # Variables provided by cron job enviroment variable.
 # They should also be added into .bashrc for user use.
-#RAPTOREUM_CLI    -> Path to the raptoreum-cli
-#CONFIG_DIR/HOME  -> Path to "$HOME/.raptoreumcore/"
+#THETA_CLI    -> Path to the theta-cli
+#CONFIG_DIR/HOME  -> Path to "$HOME/.thetacore/"
 
 # Add your NODE_PROTX here if you forgot or provided wrong hash during node
 # installation.
@@ -19,15 +19,15 @@ LOCAL_HEIGHT=0
 
 # Prepare some variables that can be set if the user is runing the script
 # manually but are set in cron job enviroment.
-if [[ -z $RAPTOREUM_CLI ]]; then
-  RAPTOREUM_CLI=$(which raptoreum-cli)
+if [[ -z $THETA_CLI ]]; then
+  THETA_CLI=$(which theta-cli)
 fi
 
 if [[ -z $CONFIG_DIR ]]; then
   if [[ -z $HOME ]]; then
     HOME="/home/$USER/"
   fi
-  CONFIG_DIR="$HOME/.raptoreumcore/"
+  CONFIG_DIR="$HOME/.thetacore/"
 fi
 
 function GetNumber () {
@@ -45,7 +45,7 @@ function ReadValue () {
 # Allow read anything from CLI with $@ arguments. Timeout after 300s.
 function ReadCli () {
   # This should just echo (return) value with standard stdout.
-  ${RAPTOREUM_CLI} $@ &
+  ${THETA_CLI} $@ &
   PID=$!
   for i in {0..60}; do
     sleep 1
@@ -54,19 +54,19 @@ function ReadCli () {
       return
     fi
   done
-  # raptoreum-cli did not return after 300s. kill the PID and exit with -1.
+  # theta-cli did not return after 300s. kill the PID and exit with -1.
   kill -9 $PID
   echo -1
 }
 
 function tryToKillDaemonGracefullyFirst() {
   echo "$(date -u)  Trying to kill daemon gracefully..."
-  killall raptoreumd
+  killall thetad
   sleep 90s
   LOCAL_HEIGHT=$(GetNumber "$(ReadCli getblockcount)")
   if (( LOCAL_HEIGHT < 0 )); then
      echo  "$(date -u)  Unable to kill daemon gracefully, force kill it..."
-     killall -9 raptoreumd
+     killall -9 thetad
   else
      echo "$(date -u) Daemon has restarted..."
   fi
@@ -94,13 +94,13 @@ function CheckPoSe () {
   PREV_SCORE=$(ReadValue "/tmp/pose_score")
   echo ${POSE_SCORE} >/tmp/pose_score
 
-  # Check if we should restart raptoreumd according to the PoSe score.
+  # Check if we should restart thetad according to the PoSe score.
   if (( POSE_SCORE > 0 )); then
     if (( POSE_SCORE > PREV_SCORE )); then
       echo "$(date -u)  Score increased from ${PREV_SCORE} to ${POSE_SCORE}. Send kill signal..."
       tryToKillDaemonGracefullyFirst
       echo "1" >/tmp/was_stuck
-      # Do not check node height after killing raptoreumd it is sure to be stuck.
+      # Do not check node height after killing thetad it is sure to be stuck.
       exit
     elif (( POSE_SCORE < PREV_SCORE )); then
       echo "$(date -u)  Score decreased from ${PREV_SCORE} to ${POSE_SCORE}. Wait..."
@@ -143,7 +143,7 @@ function CheckBlockHeight () {
 	    tryToKillDaemonGracefullyFirst
       else
         # Node is most probably very stuck and if trying to sync wrong chain branch.
-        # This meand simple raptoreumd kill will not help and we need to
+        # This meand simple thetad kill will not help and we need to
         # force unstuck by bootstrapping / resyncing the chain again.
         echo " Node seems to be hardstuck and is trying to sync forked chain. Try to force unstuck..."
         return 1
@@ -161,15 +161,15 @@ function BootstrapChain () {
   echo "0" >/tmp/height
   echo "0" >/tmp/prev_stuck
 
-  echo "$(date -u)  Download and prepare rtm-bootstrap."
+  echo "$(date -u)  Download and prepare fita-bootstrap."
   rm -rf /tmp/bootstrap 2>/dev/null
   mkdir -p /tmp/bootstrap 2>/dev/null
   curl -L "$BOOTSTRAP_TAR" | tar xJ -C /tmp/bootstrap/
   
-  # Stop serivce and kill raptoreumd.
-  echo "$(date -u)  Kill raptoreumd."
-  sudo systemctl stop raptoreum
-  killall -9 raptoreumd 2>/dev/null
+  # Stop serivce and kill thetad.
+  echo "$(date -u)  Kill thetad."
+  sudo systemctl stop theta
+  killall -9 thetad 2>/dev/null
 
   echo "$(date -u)  Clean ${CONFIG_DIR}."
   rm -rf ${CONFIG_DIR}/{blocks,chainstate,evodb,llmq}
@@ -178,12 +178,12 @@ function BootstrapChain () {
   
   rm -rf /tmp/bootstrap 2>/dev/null
   echo "$(date -u)  Bootstrap complete."
-  sudo systemctl start raptoreum
+  sudo systemctl start theta
 }
 
 # This should force unstuck the local node.
 function ReconsiderBlock () {
-  # If raptoreum-cli is responsive and it is stuck in the different place than before.
+  # If theta-cli is responsive and it is stuck in the different place than before.
   if [[ $LOCAL_HEIGHT -gt 0 && $LOCAL_HEIGHT -gt $(ReadValue "/tmp/prev_stuck") ]]; then
     # Node is still responsive but is stuck on the wrong branch/fork.
     RECONSIDER=$(( LOCAL_HEIGHT - 10 ))
@@ -197,7 +197,7 @@ function ReconsiderBlock () {
       fi
     fi
   fi
-  # raptoreum-cli is/was unresponsive in at least 1 step
+  # theta-cli is/was unresponsive in at least 1 step
   return 1
 }
 
