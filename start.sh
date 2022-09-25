@@ -1,7 +1,7 @@
 #!/bin/bash
 
-EXECUTABLE='raptoreumd'
-DIR='/raptoreum/.raptoreumcore'
+EXECUTABLE='thetad'
+DIR='/theta/.thetacore'
 CONF_FILE='raptoreum.conf'
 FILE=$DIR/$CONF_FILE
 
@@ -24,15 +24,15 @@ par=2
 dbcache=1024
 smartnodeblsprivkey=${BLS_KEY}
 externalip=${EXTERNALIP}
-addnode=explorer.raptoreum.com
-addnode=raptor.mopsus.com
-addnode=209.151.150.72
-addnode=94.237.79.27
-addnode=95.111.216.12
-addnode=198.100.149.124
-addnode=198.100.146.111
-addnode=5.135.187.46
-addnode=5.135.179.95
+addnode=chain.thetaspere.com
+addnode=91.90.11.205
+addnode=78.186.117.161
+addnode=84.42.20.117
+addnode=37.192.138.15
+addnode=5.2.212.100
+addnode=81.133.36.219
+addnode=31.173.170.169
+addnode=185.31.32.208
 EOF
   else
     cat << EOF > $FILE
@@ -42,15 +42,15 @@ rpcallowip=127.0.0.1
 rpcbind=127.0.0.1
 server=1
 listen=1
-addnode=explorer.raptoreum.com
-addnode=raptor.mopsus.com
-addnode=209.151.150.72
-addnode=94.237.79.27
-addnode=95.111.216.12
-addnode=198.100.149.124
-addnode=198.100.146.111
-addnode=5.135.187.46
-addnode=5.135.179.95
+addnode=chain.thetaspere.com
+addnode=91.90.11.205
+addnode=78.186.117.161
+addnode=84.42.20.117
+addnode=37.192.138.15
+addnode=5.2.212.100
+addnode=81.133.36.219
+addnode=31.173.170.169
+addnode=185.31.32.208
 EOF
   fi
 fi
@@ -61,7 +61,7 @@ if [ ! -e /usr/local/bin/healthcheck.sh ]; then
   cat << EOF > healthcheck.sh
 #!/bin/bash
 
-POSE_SCORE=\$(curl -s "https://explorer.raptoreum.com/api/protx?command=info&protxhash=${PROTX_HASH}" | jq -r '.state.PoSePenalty')
+POSE_SCORE=\$(curl -s "https://chain.thetaspere.com/api/protx?command=info&protxhash=${PROTX_HASH}" | jq -r '.state.PoSePenalty')
 if ((POSE_SCORE>0)); then
   kill -15 -1
   sleep 15
