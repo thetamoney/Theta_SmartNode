@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR='/raptoreum/.raptoreumcore'
+DIR='/theta/.thetacore'
 BOOTSTRAP_TAR='https://bootstrap.raptoreum.com/bootstrap_with_indexes.tar.xz'
 
 if [ ! -d $DIR ]; then
