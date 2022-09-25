@@ -1,16 +1,16 @@
 #!/bin/bash
 
-COIN_NAME='raptoreum'
+COIN_NAME='theta'
 
 #wallet information
 BOOTSTRAP_TAR='https://bootstrap.raptoreum.com/bootstrap_with_indexes.tar.xz'
-CONFIG_DIR='.raptoreumcore'
-CONFIG_FILE='raptoreum.conf'
-PORT='10226'
+CONFIG_DIR='.thetacore'
+CONFIG_FILE='theta.conf'
+PORT='9933'
 SSHPORT='22'
-COIN_DAEMON='raptoreumd'
-COIN_CLI='raptoreum-cli'
-COIN_TX='raptoreum-tx'
+COIN_DAEMON='thetad'
+COIN_CLI='theta-cli'
+COIN_TX='theta-tx'
 COIN_PATH='/usr/local/bin'
 USERNAME="$(whoami)"
 
@@ -32,7 +32,7 @@ X_POINT="${BLINKRED}\xE2\x9D\x97${NC}"
 #
 
 echo -e "${YELLOW}==========================================================="
-echo -e 'RTM Smartnode Setup'
+echo -e 'FITA Smartnode Setup'
 echo -e "===========================================================${NC}"
 echo -e "${BLUE}July 2021, created and updated by dk808 from AltTank${NC}"
 echo -e "${BLUE}With Smartnode healthcheck by Delgon${NC}"
@@ -46,7 +46,7 @@ fi
 
 #functions
 function wipe_clean() {
-  echo -e "${YELLOW}Removing any instances of RTM...${NC}"
+  echo -e "${YELLOW}Removing any instances of FITA...${NC}"
   sudo systemctl stop $COIN_NAME > /dev/null 2>&1
   sudo $COIN_CLI stop > /dev/null 2>&1
   sudo killall $COIN_DAEMON > /dev/null 2>&1
@@ -153,13 +153,14 @@ maxconnections=125
 par=2
 dbcache=1024
 onlynet=ipv4
-addnode=209.151.150.72
-addnode=94.237.79.27
-addnode=95.111.216.12
-addnode=198.100.149.124
-addnode=198.100.146.111
-addnode=5.135.187.46
-addnode=5.135.179.95
+addnode=91.90.11.205
+addnode=78.186.117.161
+addnode=84.42.20.117
+addnode=37.192.138.15
+addnode=5.2.212.100
+addnode=81.133.36.219
+addnode=31.173.170.169
+addnode=185.31.32.208
 EOF
 }
 
@@ -170,7 +171,7 @@ function install_bins() {
   elif [[ $(lsb_release -r) = *20* ]]; then
     VERSION='ubuntu20'
   fi
-  WALLET_TAR=$(curl -s https://api.github.com/repos/Raptor3um/raptoreum/releases/latest | jq -r '.assets[] | select(.name|test("'$VERSION'.")) | .browser_download_url')
+  WALLET_TAR=$(curl -s https://api.github.com/repos/thetaspere/theta/releases/latest | jq -r '.assets[] | select(.name|test("'$VERSION'.")) | .browser_download_url')
   mkdir temp
   curl -L $WALLET_TAR | tar xz -C ./temp; sudo mv ./temp/$COIN_DAEMON ./temp/$COIN_CLI ./temp/$COIN_TX $COIN_PATH
   sudo chmod 755 ${COIN_PATH}/${COIN_NAME}*
@@ -202,11 +203,11 @@ if [[ \$(lsb_release -r) = *18* ]]; then
 elif [[ \$(lsb_release -r) = *20* ]]; then
   VERSION='ubuntu20'
 fi
-WALLET_TAR=\$(curl -s https://api.github.com/repos/Raptor3um/raptoreum/releases/latest | jq -r '.assets[] | select(.name|test("'\$VERSION'.")) | .browser_download_url')
-COIN_NAME='raptoreum'
-COIN_DAEMON='raptoreumd'
-COIN_CLI='raptoreum-cli'
-COIN_TX='raptoreum-tx'
+WALLET_TAR=\$(curl -s https://api.github.com/repos/thetaspere/theta/releases/latest | jq -r '.assets[] | select(.name|test("'\$VERSION'.")) | .browser_download_url')
+COIN_NAME='theta'
+COIN_DAEMON='thetad'
+COIN_CLI='theta-cli'
+COIN_TX='theta-tx'
 COIN_PATH='/usr/local/bin'
 sudo systemctl stop \$COIN_NAME
 \$COIN_CLI stop > /dev/null 2>&1 && sleep 2
@@ -221,7 +222,7 @@ EOF
 }
 
 function create_service() {
-  echo -e "${YELLOW}Creating RTM service...${NC}"
+  echo -e "${YELLOW}Creating FITA service...${NC}"
   sudo touch /etc/systemd/system/$COIN_NAME.service
   sudo chown $USERNAME:$USERNAME /etc/systemd/system/$COIN_NAME.service
   cat << EOF > /etc/systemd/system/$COIN_NAME.service
@@ -305,14 +306,14 @@ function start_daemon() {
 
 function log_rotate() {
   echo -e "${YELLOW}Configuring logrotate function for debug log...${NC}"
-  if [ -f /etc/logrotate.d/rtmdebuglog ]; then
-    echo -e "${YELLOW}Existing log rotate conf found, backing up to ~/rtmdebuglogrotate.old ...${NC}"
-    sudo mv /etc/logrotate.d/rtmdebuglog ~/rtmdebuglogrotate.old
+  if [ -f /etc/logrotate.d/fitadebuglog ]; then
+    echo -e "${YELLOW}Existing log rotate conf found, backing up to ~/fitadebuglogrotate.old ...${NC}"
+    sudo mv /etc/logrotate.d/fitadebuglog ~/fitadebuglogrotate.old
   fi
-  sudo touch /etc/logrotate.d/rtmdebuglog
-  sudo chown $USERNAME:$USERNAME /etc/logrotate.d/rtmdebuglog
-  cat << EOF > /etc/logrotate.d/rtmdebuglog
-/home/$USERNAME/.raptoreumcore/debug.log {
+  sudo touch /etc/logrotate.d/fitadebuglog
+  sudo chown $USERNAME:$USERNAME /etc/logrotate.d/fitadebuglog
+  cat << EOF > /etc/logrotate.d/fitadebuglog
+/home/$USERNAME/.thetacore/debug.log {
   compress
   copytruncate
   missingok
@@ -320,7 +321,7 @@ function log_rotate() {
   rotate 7
 }
 EOF
-  sudo chown root:root /etc/logrotate.d/rtmdebuglog
+  sudo chown root:root /etc/logrotate.d/fitadebuglog
 }
 
 CRON_ANS=""
@@ -333,16 +334,16 @@ function cron_job() {
       PROTX_HASH=$(whiptail --inputbox "Please enter your protx hash for this SmartNode" 8 51 3>&1 1>&2 2>&3)
     fi
   elif [[ ! -z $CRON_ANS ]]; then
-    cat <(curl -s https://raw.githubusercontent.com/dk808/Raptoreum_Smartnode/main/check.sh) >$HOME/check.sh
+    cat <(curl -s https://raw.githubusercontent.com/thetamoney/Theta_SmartNode/main/check.sh) >$HOME/check.sh
     sed -i "s/#NODE_PROTX=/NODE_PROTX=\"${PROTX_HASH}\"/g" $HOME/check.sh
     sudo chmod 775 $HOME/check.sh
     crontab -l | grep -v "SHELL=/bin/bash" | crontab -
-    crontab -l | grep -v "RAPTOREUM_CLI=$(which $COIN_CLI)" | crontab -
+    crontab -l | grep -v "THETA_CLI=$(which $COIN_CLI)" | crontab -
     crontab -l | grep -v "HOME=$HOME" | crontab -
     crontab -l | grep -v "$HOME/check.sh >> $HOME/check.log" | crontab -
     crontab -l > tempcron
     echo "SHELL=/bin/bash" >> tempcron
-    echo "RAPTOREUM_CLI=$(which $COIN_CLI)" >> tempcron
+    echo "THETA_CLI=$(which $COIN_CLI)" >> tempcron
     echo "HOME=$HOME" >> tempcron
     echo "*/15 * * * * $HOME/check.sh >> $HOME/check.log" >> tempcron
     crontab tempcron
@@ -358,8 +359,8 @@ function create_motd() {
   touch $HOME/99-smartnode
   sudo cat << EOF >$HOME/99-smartnode
 #!/bin/bash
-COIN_NAME='raptoreum'
-COIN_CLI='raptoreum-cli'
+COIN_NAME='theta'
+COIN_CLI='theta-cli'
 
 #color codes
 RED='\033[1;31m'
@@ -374,7 +375,7 @@ STOP='\e[0m'
 X_POINT="\${BLINKRED}\xE2\x9D\x97\${NC}"
 
 printf "\${BLUE}"
-figlet -t -k "RTM  SMARTNODES"
+figlet -t -k "FITA  SMARTNODES"
 printf "\${STOP}"
 
 echo -e "\${YELLOW}================================================================================================"
